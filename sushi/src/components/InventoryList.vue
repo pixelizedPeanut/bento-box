@@ -9,7 +9,9 @@
           <tr>
             <th>Item Title</th>
             <th>Description</th>
-            <th class="text-right">Stock</th>
+            <th class="text-right">
+              Stock
+            </th>
             <th>Expires</th>
           </tr>
         </thead>
@@ -21,8 +23,12 @@
             @click="selectItem(item.id)"
           >
             <!-- Core Text Columns -->
-            <td class="item-title">{{ item.title }}</td>
-            <td class="item-desc">{{ item.description }}</td>
+            <td class="item-title">
+              {{ item.title }}
+            </td>
+            <td class="item-desc">
+              {{ item.description }}
+            </td>
 
             <!-- Dynamic Numeric Stock Column -->
             <td class="text-right">
@@ -62,7 +68,6 @@ import { ref } from 'vue'
 defineProps({
   inventory: {
     type: Array,
-    required: true,
     default: () => []
   }
 })

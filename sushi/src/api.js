@@ -30,7 +30,12 @@ export const api = {
 
   // --- Members ---
   getMembers () {
-    return request('/members/') // Adjust to '/members/' if using a router prefix later
+    return request('/members/')
+  },
+
+  // --- Bookings ---
+  getBookings () {
+    return request('/bookings/')
   },
 
   // --- Bookings ---

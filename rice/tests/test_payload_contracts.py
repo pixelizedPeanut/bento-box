@@ -25,6 +25,28 @@ PAYLOAD_CONTRACT_CASES = [
         status.HTTP_200_OK,
         ["id", "name", "surname", "booking_count"],  # Member model wire contract
     ),
+    (
+        "FETCH_ALL_BOOKINGS",
+        "GET",
+        "/bookings/",
+        None,
+        status.HTTP_200_OK,
+        [
+            "booking_ref",
+            "member_id",
+            "inventory_id",
+            "created_at",
+            "status",
+        ],
+    ),
+    (
+        "CANCEL_EXISTING_BOOKING",
+        "POST",
+        "/cancel",
+        {"booking_ref": "BBOX-A40A26E9"},
+        status.HTTP_200_OK,
+        ["message", "booking_ref", "status"],
+    ),
 ]
 
 

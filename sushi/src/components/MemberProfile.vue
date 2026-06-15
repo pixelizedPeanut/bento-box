@@ -8,7 +8,9 @@
           <tr>
             <th>Member</th>
             <th>Joined</th>
-            <th class="text-right">Bookings</th>
+            <th class="text-right">
+              Bookings
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -45,7 +47,6 @@ import { ref } from 'vue'
 defineProps({
   members: {
     type: Array,
-    required: true,
     default: () => []
   }
 })

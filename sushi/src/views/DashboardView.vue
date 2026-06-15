@@ -41,6 +41,11 @@
           :selected-id="selectedInventoryId"
           @select="clearBannerAndSelectInventory"
         />
+
+        <Bookings
+          :bookings="store.bookings"
+          @cancel="handleBookingCancellation"
+        />
       </div>
     </div>
   </main>
@@ -53,14 +58,15 @@ import { useBentoStore } from '@/stores/bentoStore'
 import MemberProfile from '@/components/MemberProfile.vue'
 import BookingForm from '@/components/BookingForm.vue'
 import InventoryList from '@/components/InventoryList.vue'
+import Bookings from '@/components/Bookings.vue'
 
 import { api } from '@/api'
 
 const store = useBentoStore()
 
 // State containers to hold our cross-component sync coordinates
-let selectedMemberId = ref(null)
-let selectedInventoryId = ref(null)
+const selectedMemberId = ref(null)
+const selectedInventoryId = ref(null)
 
 // Track temporary confirmation banner status locally at view layer
 const bookingStatus = reactive({
@@ -92,23 +98,38 @@ const resetStatusBanner = () => {
 // Master execution pipeline for processing positive component booking requests
 const handleBookingSubmission = async (payload) => {
   try {
-    // 1. Hit your concrete store endpoint passing payload ids out to database layers
-    // Adjust action name if your bentoStore mapping utilizes a different name
     await api.bookItem(payload.memberId, payload.inventoryId)
 
-    // 2. Display the local validation success confirmation layer banner
     bookingStatus.success = true
     bookingStatus.message = 'Workspace reservation successfully logged! Grid values flushed.'
 
-    // 3. Wipe selection variables out across columns to clear highlighted rows completely
-    selectedMemberId = ref(null)
-    selectedInventoryId = ref(null)
+    // Fixed: Mutating the wrapper value directly protects Vue's rendering reactivity
+    selectedMemberId.value = null
+    selectedInventoryId.value = null
 
-    // 4. Force state engine tables to pull fresh updated counts instantly from the servers
     await store.refreshDashboardData()
 
   } catch (error) {
     console.error('Failed processing dashboard workspace transaction:', error)
+  }
+}
+
+const handleBookingCancellation = async (bookingRef) => {
+  try {
+    resetStatusBanner()
+
+    // 1. Dispatch string payload straight to backend endpoint database task structures
+    const result = await api.cancelBooking(bookingRef)
+
+    // 2. Set view level verification response alert message
+    bookingStatus.success = true
+    bookingStatus.message = result.message || `Booking ${bookingRef} successfully cancelled.`
+
+    // 3. Force state stores to broadcast and cycle out the cached allocations data records
+    await store.refreshDashboardData()
+
+  } catch (error) {
+    console.error('Failed processing cancellation pipeline cascade:', error)
   }
 }
 </script>
@@ -139,6 +160,12 @@ const handleBookingSubmission = async (payload) => {
 }
 
 .sidebar-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.main-column {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

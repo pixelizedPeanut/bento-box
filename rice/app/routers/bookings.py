@@ -1,4 +1,5 @@
 import uuid
+from typing import Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,16 @@ from ..models import Booking, InventoryItem, Member
 from ..schemas import BookingRequest, BookingResponse, CancelRequest, CancelResponse
 
 router: APIRouter = APIRouter(tags=["Bookings"])
+
+
+@router.get("/bookings/", response_model=list[BookingResponse])
+async def read_bookings(db: AsyncSession = Depends(get_db)) -> Sequence[Booking]:
+    """
+    Fetches the global list of tracked bookings for the frontend dashboard.
+    """
+    result = await db.execute(select(Booking))
+    bookings: Sequence[Booking] = result.scalars().all()
+    return bookings
 
 
 @router.post(

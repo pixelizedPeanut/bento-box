@@ -4,7 +4,8 @@ import { api } from '@/api'
 
 export const useBentoStore = defineStore('bento', () => {
   const members = ref([])
-  const inventory = ref([]) // Added live inventory state container
+  const inventory = ref([])
+  const bookings = ref([])
   const isLoading = ref(false)
   const errorMessage = ref(null)
 
@@ -14,9 +15,10 @@ export const useBentoStore = defineStore('bento', () => {
 
     try {
       // Fire both network requests in parallel for maximum speed
-      const [rawMembers, rawInventory] = await Promise.all([
+      const [rawMembers, rawInventory, rawBookings] = await Promise.all([
         api.getMembers(),
-        api.getInventory()
+        api.getInventory(),
+        api.getBookings()
       ])
 
       // Map member rows using your exact key patterns
@@ -36,6 +38,15 @@ export const useBentoStore = defineStore('bento', () => {
         remainingCount: item.remaining_count || 0,
         expirationDate: item.expiration_date
       }))
+
+      // Map bookings to camelCase
+      bookings.value = rawBookings.map(booking => ({
+        bookingRef: booking.booking_ref,
+        memberId: booking.member_id.toString(),
+        inventoryId: booking.inventory_id.toString(),
+        createdAt: booking.created_at,
+        status: booking.status.toUpperCase()
+      }))
     } catch (error) {
       errorMessage.value = error.message || 'Failed to sync with workspace engine.'
       console.error(error)
@@ -47,6 +58,7 @@ export const useBentoStore = defineStore('bento', () => {
   return {
     members,
     inventory, // Exposed inventory state to layout components
+    bookings,
     isLoading,
     errorMessage,
     refreshDashboardData
