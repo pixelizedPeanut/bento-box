@@ -1,7 +1,7 @@
 <template>
-    <DashboardView />
+  <DashboardView />
 </template>
 
 <script setup>
-import DashboardView from "./views/DashboardView.vue";
+import DashboardView from './views/DashboardView.vue'
 </script>

@@ -5,19 +5,14 @@ from pydantic import BaseModel, ConfigDict
 
 # --- Member Schemas ---
 class MemberBase(BaseModel):
-    first_name: str
-    last_name: str
-    email: str
-    tier: str = "Standard"
-
-
-class MemberCreate(MemberBase):
-    pass
+    name: str
+    surname: str
+    booking_count: int
+    date_joined: datetime
 
 
 class MemberResponse(MemberBase):
     id: int
-    is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -25,12 +20,12 @@ class MemberResponse(MemberBase):
 # --- Inventory Schemas ---
 class InventoryItemBase(BaseModel):
     title: str
-    category: str
-    description: str | None = None
-    price: float
-    stock: int = 0
+    description: str
+    remaining_count: int
+    expiration_date: datetime
 
 
+# 💡 ADDED: Your items.py router needs this blueprint to handle POST requests!
 class InventoryItemCreate(InventoryItemBase):
     pass
 
@@ -41,6 +36,7 @@ class InventoryItemResponse(InventoryItemBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+# --- Booking Schemas ---
 class BookingRequest(BaseModel):
     member_id: int
     inventory_id: int
@@ -56,6 +52,7 @@ class BookingResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# --- Cancellation Schemas ---
 class CancelRequest(BaseModel):
     booking_ref: str
 

@@ -48,14 +48,14 @@ async def book_item(
     if not item:
         raise HTTPException(status_code=404, detail="Inventory item not found")
 
-    # 4. Constraint: Check item remaining_count (stock)
-    if item.stock <= 0:
+    # 4. Constraint: Check item remaining_count (swapped from stock)
+    if item.remaining_count <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Item is out of stock"
         )
 
-    # 5. Execute: Deduct stock and generate unique reference string
-    item.stock -= 1
+    # 5. Execute: Deduct from remaining_count and generate unique reference string
+    item.remaining_count -= 1
     generated_ref: str = f"BBOX-{uuid.uuid4().hex[:8].upper()}"
 
     # 6. Record the booking
@@ -92,13 +92,13 @@ async def cancel_booking(
     # 2. Update booking status
     booking.status = "CANCELLED"
 
-    # 3. Restock the inventory item
+    # 3. Restock the inventory item (swapped from stock)
     item_result = await db.execute(
         select(InventoryItem).where(InventoryItem.id == booking.inventory_id)
     )
     item: InventoryItem | None = item_result.scalar_one_or_none()
     if item:
-        item.stock += 1
+        item.remaining_count += 1
 
     await db.commit()
 

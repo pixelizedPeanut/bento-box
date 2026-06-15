@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import bookings, items
+from .routers import bookings, items, members
 
 app: FastAPI = FastAPI(title="bento-box backend")
 
@@ -16,6 +16,7 @@ app.add_middleware(
 
 app.include_router(bookings.router)
 app.include_router(items.router)
+app.include_router(members.router)
 
 
 @app.get("/")

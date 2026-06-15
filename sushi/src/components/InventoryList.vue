@@ -1,8 +1,10 @@
 <template>
-    <div class="card">
-        <h2>📦 Available Experiences & Inventory</h2>
-        <p class="placeholder">Awaiting database sync parameters...</p>
-    </div>
+  <div class="card">
+    <h2>📦 Available Experiences & Inventory</h2>
+    <p class="placeholder">
+      Awaiting database sync parameters...
+    </p>
+  </div>
 </template>
 
 <style lang="scss" scoped>

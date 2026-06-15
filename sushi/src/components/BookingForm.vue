@@ -1,8 +1,10 @@
 <template>
-    <div class="card">
-        <h3>🎟️ Quick Booking</h3>
-        <p class="placeholder">Booking processing controls will render here.</p>
-    </div>
+  <div class="card">
+    <h3>🎟️ Quick Booking</h3>
+    <p class="placeholder">
+      Booking processing controls will render here.
+    </p>
+  </div>
 </template>
 
 <style lang="scss" scoped>
