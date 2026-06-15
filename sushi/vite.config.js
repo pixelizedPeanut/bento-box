@@ -12,6 +12,8 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
+        // Tells Vite to switch to the modern, faster Dart Sass compilation API
+        api: "modern-compiler",
         additionalData: `@use "@/assets/styles/_variables.scss" as *;`,
       },
     },

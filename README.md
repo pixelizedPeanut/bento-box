@@ -28,4 +28,15 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-uvicorn app.main:app --reload
+make init-db
+make run
+```
+
+### 2. Frontend (`sushi`)
+Open another terminal tab and run:
+
+```bash
+cd sushi
+npm install
+npm run dev
+```
