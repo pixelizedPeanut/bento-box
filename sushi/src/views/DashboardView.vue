@@ -4,7 +4,7 @@
       <h1>🍱 Bento Box Workspace</h1>
     </header>
 
-    <!-- Optional global status banners controlled by our store -->
+    <!-- Global status banners controlled by our store -->
     <div v-if="store.isLoading" class="loading-bar">
       Updating active workbench...
     </div>
@@ -12,35 +12,105 @@
       {{ store.errorMessage }}
     </div>
 
+    <!-- Live Booking Success Alerts managed by the View -->
+    <div v-if="bookingStatus.success" class="success-banner">
+      🎉 {{ bookingStatus.message }}
+    </div>
+
     <div class="dashboard-grid">
       <div class="sidebar-column">
-        <!-- Pass the store data straight down through the props channel -->
-        <MemberProfile :members="store.members" />
-        <BookingForm />
+        <!-- Listen for selection shifts; force value to null if reset by dashboard action -->
+        <MemberProfile
+          :members="store.members"
+          :selected-id="selectedMemberId"
+          @select="clearBannerAndSelectMember"
+        />
+
+        <!-- Listen for the successful booking event broadcast from inside the form -->
+        <BookingForm
+          :member-id="selectedMemberId"
+          :inventory-id="selectedInventoryId"
+          @success="handleBookingSubmission"
+        />
       </div>
 
       <div class="main-column">
-        <!-- Inventory will go here next -->
-        <InventoryList />
+        <!-- Listen for selection shifts; force value to null if reset by dashboard action -->
+        <InventoryList
+          :inventory="store.inventory"
+          :selected-id="selectedInventoryId"
+          @select="clearBannerAndSelectInventory"
+        />
       </div>
     </div>
   </main>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { useBentoStore } from '@/stores/bentoStore'
 
 import MemberProfile from '@/components/MemberProfile.vue'
 import BookingForm from '@/components/BookingForm.vue'
 import InventoryList from '@/components/InventoryList.vue'
 
+import { api } from '@/api'
+
 const store = useBentoStore()
+
+// State containers to hold our cross-component sync coordinates
+let selectedMemberId = ref(null)
+let selectedInventoryId = ref(null)
+
+// Track temporary confirmation banner status locally at view layer
+const bookingStatus = reactive({
+  success: false,
+  message: ''
+})
 
 // Fire off the master fetch payload to fill our store tables automatically on load
 onMounted(() => {
   store.refreshDashboardData()
 })
+
+// Helper methods to clear confirmation messages immediately if user starts choosing new rows
+const clearBannerAndSelectMember = (id) => {
+  resetStatusBanner()
+  selectedMemberId.value = id
+}
+
+const clearBannerAndSelectInventory = (id) => {
+  resetStatusBanner()
+  selectedInventoryId.value = id
+}
+
+const resetStatusBanner = () => {
+  bookingStatus.success = false
+  bookingStatus.message = ''
+}
+
+// Master execution pipeline for processing positive component booking requests
+const handleBookingSubmission = async (payload) => {
+  try {
+    // 1. Hit your concrete store endpoint passing payload ids out to database layers
+    // Adjust action name if your bentoStore mapping utilizes a different name
+    await api.bookItem(payload.memberId, payload.inventoryId)
+
+    // 2. Display the local validation success confirmation layer banner
+    bookingStatus.success = true
+    bookingStatus.message = 'Workspace reservation successfully logged! Grid values flushed.'
+
+    // 3. Wipe selection variables out across columns to clear highlighted rows completely
+    selectedMemberId = ref(null)
+    selectedInventoryId = ref(null)
+
+    // 4. Force state engine tables to pull fresh updated counts instantly from the servers
+    await store.refreshDashboardData()
+
+  } catch (error) {
+    console.error('Failed processing dashboard workspace transaction:', error)
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -79,9 +149,21 @@ onMounted(() => {
   padding-bottom: 1rem;
   font-weight: 500;
 }
+
 .error-bar {
   color: #e53e3e;
   padding-bottom: 1rem;
   font-weight: 500;
+}
+
+.success-banner {
+  background-color: #f0fff4;
+  border: 1px solid #c6f6d5;
+  color: #22543d;
+  padding: 1rem;
+  border-radius: $radius;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  font-size: 0.95rem;
 }
 </style>

@@ -21,7 +21,7 @@ export const useBentoStore = defineStore('bento', () => {
 
       // Map member rows using your exact key patterns
       members.value = rawMembers.map(member => ({
-        id: member.id,
+        id: member.id.toString(),
         name: member.name,
         surname: member.surname,
         dateJoined: member.date_joined,
@@ -30,7 +30,7 @@ export const useBentoStore = defineStore('bento', () => {
 
       // Map inventory columns and transform fields to camelCase
       inventory.value = rawInventory.map(item => ({
-        id: item.id, // Maintained for unique v-for keys
+        id: item.id.toString(), // Maintained for unique v-for keys
         title: item.title,
         description: item.description,
         remainingCount: item.remaining_count || 0,

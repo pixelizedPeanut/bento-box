@@ -1,7 +1,6 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -27,17 +26,11 @@ async def book_item(
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
 
-    # 2. Constraint: Check if member reached MAX_BOOKINGS (only counting active "CONFIRMED" bookings)
-    bookings_count_result = await db.execute(
-        select(func.count(Booking.id))
-        .where(Booking.member_id == payload.member_id)
-        .where(Booking.status == "CONFIRMED")
-    )
-    active_bookings: int = bookings_count_result.scalar() or 0
-    if active_bookings >= settings.MAX_BOOKINGS:
+    # 2. Constraint: Check the property directly on the member object
+    if member.booking_count >= settings.MAX_BOOKINGS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Booking limit reached. Maximum active bookings allowed: {settings.MAX_BOOKINGS}",
+            detail=f"Booking limit reached for {member.name}. Maximum bookings allowed: {settings.MAX_BOOKINGS}",
         )
 
     # 3. Verify Inventory Item Exists
@@ -48,14 +41,15 @@ async def book_item(
     if not item:
         raise HTTPException(status_code=404, detail="Inventory item not found")
 
-    # 4. Constraint: Check item remaining_count (swapped from stock)
+    # 4. Constraint: Check item remaining_count
     if item.remaining_count <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Item is out of stock"
         )
 
-    # 5. Execute: Deduct from remaining_count and generate unique reference string
+    # 5. Execute: Update counters & generate unique reference string
     item.remaining_count -= 1
+    member.booking_count += 1  # 👈 Keep the member counter cache updated!
     generated_ref: str = f"BBOX-{uuid.uuid4().hex[:8].upper()}"
 
     # 6. Record the booking
@@ -63,7 +57,6 @@ async def book_item(
         booking_ref=generated_ref,
         member_id=payload.member_id,
         inventory_id=payload.inventory_id,
-        status="CONFIRMED",
     )
 
     db.add(new_booking)

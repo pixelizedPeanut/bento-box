@@ -18,15 +18,12 @@
             :class="{ 'is-selected': selectedId === member.id }"
             @click="selectMember(member.id)"
           >
-            <!-- Combines Name + Surname -->
             <td class="member-name">
               {{ member.name }} {{ member.surname }}
             </td>
-            <!-- Formatted Date Column -->
             <td class="text-muted">
               {{ formatDate(member.dateJoined) }}
             </td>
-            <!-- Aligned Numeric Booking Count -->
             <td class="text-right">
               <span class="booking-badge">{{ member.bookingCount }}</span>
             </td>
@@ -53,13 +50,19 @@ defineProps({
   }
 })
 
+// 1. Declare the outbound communication event channel
+const emit = defineEmits(['select'])
+
 const selectedId = ref(null)
 
 const selectMember = (id) => {
+  // Toggle local highlight tracking state
   selectedId.value = selectedId.value === id ? null : id
+
+  // 2. Fire the active state out to the parent engine (returns the ID or null)
+  emit('select', selectedId.value)
 }
 
-// Drops the timestamps and outputs a clean 'Jan 15, 2026' format
 const formatDate = (dateString) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
@@ -153,7 +156,6 @@ const formatDate = (dateString) => {
     }
   }
 
-  // Layout alignment helpers
   .text-right {
     text-align: right;
   }
