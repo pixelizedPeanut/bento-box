@@ -13,3 +13,4 @@ Navigate to the frontend directory and install the dependencies:
 ```bash
 cd sushi
 npm install
+npm run dev
