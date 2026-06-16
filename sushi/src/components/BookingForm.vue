@@ -4,13 +4,15 @@
 
     <!-- State 1: Awaiting selections -->
     <div v-if="!selectedMember || !selectedItem" class="state-message info-box">
-      <p>💡 <strong>Ready to book?</strong> Please select a team member and an experience layer from the tables above to populate this panel.</p>
+      <p>💡 <strong>Ready to book?</strong> Please select a member and an experience layer from the tables above to populate this panel.</p>
     </div>
 
     <!-- State 2: Invalid Selection (Fails Business Logic Rules) -->
     <div v-else-if="!isValidSelection" class="state-message error-box">
       <h4>⚠️ Invalid Selection Configuration</h4>
-      <p class="error-detail">A new selection has to be made due to the following system constraints:</p>
+      <p class="error-detail">
+        A new selection has to be made due to the following system constraints:
+      </p>
 
       <ul class="error-list">
         <!-- Rule: Less than 2 bookings check -->
@@ -22,36 +24,41 @@
           ❌ <strong>{{ selectedItem.title }}</strong> is completely out of stock.
         </li>
       </ul>
-      <p class="instruction">Please click different rows in the dashboard grids to correct this.</p>
+      <p class="instruction">
+        Please click different rows in the dashboard grids to correct this.
+      </p>
     </div>
 
     <!-- State 3: Valid Selection (Passes all checks) -->
     <div v-else class="booking-workspace">
       <div class="summary-line">
         <label>Booking For</label>
-        <p class="value">{{ selectedMember.name }} {{ selectedMember.surname }}</p>
+        <p class="value">
+          {{ selectedMember.name }} {{ selectedMember.surname }}
+        </p>
         <span class="subtext">Current bookings: {{ selectedMember.bookingCount }}</span>
       </div>
 
       <div class="summary-line">
         <label>Selected Asset</label>
-        <p class="value">{{ selectedItem.title }}</p>
+        <p class="value">
+          {{ selectedItem.title }}
+        </p>
         <span class="subtext">Stock remaining: {{ selectedItem.remainingCount }} units</span>
       </div>
 
       <button
         class="submit-btn"
-        :disabled="isSubmitting"
         @click="processBooking"
       >
-        {{ isSubmitting ? 'Processing Token...' : 'Confirm Workspace Booking' }}
+        Confirm Booking
       </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useBentoStore } from '@/stores/bentoStore'
 
 const props = defineProps({
@@ -69,7 +76,6 @@ const props = defineProps({
 const emit = defineEmits(['success'])
 
 const store = useBentoStore()
-const isSubmitting = ref(false)
 
 // Look up full data records from the store array tables based on passed ID props
 const selectedMember = computed(() => {
@@ -93,18 +99,13 @@ const isValidSelection = computed(() => {
   return isMemberValid.value && isItemValid.value
 })
 
-const processBooking = async () => {
+const processBooking = () => {
   if (!isValidSelection.value) return
-
-  isSubmitting.value = true
 
   emit('success', {
     memberId: props.memberId,
     inventoryId: props.inventoryId
   })
-
-  isSubmitting.value = false
-
 }
 </script>
 

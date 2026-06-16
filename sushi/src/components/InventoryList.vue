@@ -63,27 +63,23 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 
 defineProps({
   inventory: {
     type: Array,
     default: () => []
+  },
+  selectedId: {
+    type: String,
+    default: null
   }
 })
 
 // 1. Declare the outbound communication event channel
 const emit = defineEmits(['select'])
 
-// Track item highlights locally
-const selectedId = ref(null)
-
 const selectItem = (id) => {
-  // Toggle local highlight tracking state
-  selectedId.value = selectedId.value === id ? null : id
-
-  // 2. Fire the active state out to the parent engine (returns the ID or null)
-  emit('select', selectedId.value)
+  emit('select', id)
 }
 
 // Drops time layouts and cleans up formatting smoothly

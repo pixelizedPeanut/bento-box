@@ -28,11 +28,10 @@
             </td>
             <td>
               <span :class="['status-badge', booking.status === 'CANCELLED' ? 'is-cancelled' : 'is-active']">
-                {{ booking.status || 'ACTIVE' }}
+                {{ booking.status }}
               </span>
             </td>
             <td class="text-right">
-              <!-- Action happens directly on this row's key -->
               <button
                 v-if="booking.status !== 'CANCELLED'"
                 class="btn-cancel"

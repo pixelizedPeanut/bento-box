@@ -1,6 +1,6 @@
 <template>
   <div class="card">
-    <h3>👤 Team Members</h3>
+    <h3>👤 Members</h3>
 
     <div class="table-container">
       <table class="members-table">
@@ -42,27 +42,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 
 defineProps({
   members: {
     type: Array,
     default: () => []
+  },
+  selectedId: {
+    type: String,
+    default: null
   }
 })
 
 // 1. Declare the outbound communication event channel
 const emit = defineEmits(['select'])
 
-const selectedId = ref(null)
-
-const selectMember = (id) => {
-  // Toggle local highlight tracking state
-  selectedId.value = selectedId.value === id ? null : id
-
-  // 2. Fire the active state out to the parent engine (returns the ID or null)
-  emit('select', selectedId.value)
-}
+const selectMember = (id) => emit('select', id)
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'

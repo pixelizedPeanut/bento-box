@@ -21,13 +21,6 @@ export const api = {
     return request('/inventory/')
   },
 
-  createInventoryItem (itemData) {
-    return request('/inventory/', {
-      method: 'POST',
-      body: JSON.stringify(itemData)
-    })
-  },
-
   // --- Members ---
   getMembers () {
     return request('/members/')
@@ -38,7 +31,6 @@ export const api = {
     return request('/bookings/')
   },
 
-  // --- Bookings ---
   bookItem (memberId, inventoryId) {
     return request('/book', {
       method: 'POST',

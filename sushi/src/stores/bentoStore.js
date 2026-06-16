@@ -45,7 +45,7 @@ export const useBentoStore = defineStore('bento', () => {
         memberId: booking.member_id.toString(),
         inventoryId: booking.inventory_id.toString(),
         createdAt: booking.created_at,
-        status: booking.status.toUpperCase()
+        status: booking.status
       }))
     } catch (error) {
       errorMessage.value = error.message || 'Failed to sync with workspace engine.'

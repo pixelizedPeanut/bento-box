@@ -1,7 +1,7 @@
 <template>
   <main class="dashboard">
     <header class="dashboard-header">
-      <h1>🍱 Bento Box Workspace</h1>
+      <h1>🍱 Bento Box Bookings</h1>
     </header>
 
     <!-- Global status banners controlled by our store -->
@@ -9,7 +9,7 @@
       Updating active workbench...
     </div>
     <div v-if="store.errorMessage" class="error-bar">
-      {{ store.errorMessage }}
+      ⚠️ {{ store.errorMessage }}
     </div>
 
     <!-- Live Booking Success Alerts managed by the View -->
@@ -19,14 +19,14 @@
 
     <div class="dashboard-grid">
       <div class="sidebar-column">
-        <!-- Listen for selection shifts; force value to null if reset by dashboard action -->
+        <!-- Toggles member context selections cleanly -->
         <MemberProfile
           :members="store.members"
           :selected-id="selectedMemberId"
-          @select="clearBannerAndSelectMember"
+          @select="handleMemberSelect"
         />
 
-        <!-- Listen for the successful booking event broadcast from inside the form -->
+        <!-- Forms can safely submit; double-click protection lives here via store state -->
         <BookingForm
           :member-id="selectedMemberId"
           :inventory-id="selectedInventoryId"
@@ -35,11 +35,11 @@
       </div>
 
       <div class="main-column">
-        <!-- Listen for selection shifts; force value to null if reset by dashboard action -->
+        <!-- Toggles inventory choices cleanly -->
         <InventoryList
           :inventory="store.inventory"
           :selected-id="selectedInventoryId"
-          @select="clearBannerAndSelectInventory"
+          @select="handleInventorySelect"
         />
 
         <Bookings
@@ -64,30 +64,40 @@ import { api } from '@/api'
 
 const store = useBentoStore()
 
-// State containers to hold our cross-component sync coordinates
+// Master selection coordinate states
 const selectedMemberId = ref(null)
 const selectedInventoryId = ref(null)
 
-// Track temporary confirmation banner status locally at view layer
+// Local view confirmations
 const bookingStatus = reactive({
   success: false,
   message: ''
 })
 
-// Fire off the master fetch payload to fill our store tables automatically on load
-onMounted(() => {
-  store.refreshDashboardData()
+// Safely await initial data loads on setup
+onMounted(async () => {
+  try {
+    store.isLoading = true
+    await store.refreshDashboardData()
+  } catch (err) {
+    store.errorMessage = 'Failed to initialize concierge dashboard data pipelines.'
+    console.error(err)
+  } finally {
+    store.isLoading = false
+  }
 })
 
-// Helper methods to clear confirmation messages immediately if user starts choosing new rows
-const clearBannerAndSelectMember = (id) => {
+// Clean matching logic to support on/off row toggles
+const handleMemberSelect = (id) => {
   resetStatusBanner()
-  selectedMemberId.value = id
+  store.errorMessage = null // Flush stale errors on fresh interaction
+  selectedMemberId.value = selectedMemberId.value === id ? null : id
 }
 
-const clearBannerAndSelectInventory = (id) => {
+const handleInventorySelect = (id) => {
   resetStatusBanner()
-  selectedInventoryId.value = id
+  store.errorMessage = null
+  selectedInventoryId.value = selectedInventoryId.value === id ? null : id
 }
 
 const resetStatusBanner = () => {
@@ -95,102 +105,53 @@ const resetStatusBanner = () => {
   bookingStatus.message = ''
 }
 
-// Master execution pipeline for processing positive component booking requests
+// Master execution processing pipeline
 const handleBookingSubmission = async (payload) => {
   try {
+    resetStatusBanner()
+    store.errorMessage = null
+    store.isLoading = true
+
+    // Fire actual business transaction out to servers
     await api.bookItem(payload.memberId, payload.inventoryId)
 
     bookingStatus.success = true
     bookingStatus.message = 'Workspace reservation successfully logged! Grid values flushed.'
 
-    // Fixed: Mutating the wrapper value directly protects Vue's rendering reactivity
+    // Flush selections on complete success
     selectedMemberId.value = null
     selectedInventoryId.value = null
 
+    // Sync state layout tables instantly
     await store.refreshDashboardData()
 
   } catch (error) {
     console.error('Failed processing dashboard workspace transaction:', error)
+    // CAPTURE CONCIERGE GHOST RACE CONDITIONS HERE:
+    store.errorMessage = error.response?.data?.message || 'Transaction rejected. This asset may have just been claimed by another desk.'
+  } finally {
+    store.isLoading = false
   }
 }
 
 const handleBookingCancellation = async (bookingRef) => {
   try {
     resetStatusBanner()
+    store.errorMessage = null
+    store.isLoading = true
 
-    // 1. Dispatch string payload straight to backend endpoint database task structures
     const result = await api.cancelBooking(bookingRef)
 
-    // 2. Set view level verification response alert message
     bookingStatus.success = true
     bookingStatus.message = result.message || `Booking ${bookingRef} successfully cancelled.`
 
-    // 3. Force state stores to broadcast and cycle out the cached allocations data records
     await store.refreshDashboardData()
 
   } catch (error) {
     console.error('Failed processing cancellation pipeline cascade:', error)
+    store.errorMessage = error.response?.data?.message || 'Failed to cancel the requested allocation.'
+  } finally {
+    store.isLoading = false
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.dashboard {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-
-  &-header {
-    margin-bottom: 2rem;
-    h1 {
-      font-size: 1.8rem;
-      color: $color-dark;
-    }
-  }
-}
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 350px 1fr;
-  gap: 1.5rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.sidebar-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.main-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.loading-bar {
-  color: #3182ce;
-  padding-bottom: 1rem;
-  font-weight: 500;
-}
-
-.error-bar {
-  color: #e53e3e;
-  padding-bottom: 1rem;
-  font-weight: 500;
-}
-
-.success-banner {
-  background-color: #f0fff4;
-  border: 1px solid #c6f6d5;
-  color: #22543d;
-  padding: 1rem;
-  border-radius: $radius;
-  margin-bottom: 1.5rem;
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-</style>
