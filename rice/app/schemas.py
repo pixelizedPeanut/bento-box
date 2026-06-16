@@ -1,13 +1,15 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.models import BookingStatus
 
 
 # --- Member Schemas ---
 class MemberBase(BaseModel):
     name: str
     surname: str
-    booking_count: int
+    booking_count: int = Field(ge=0, description="Cannot be negative")
     date_joined: datetime
 
 
@@ -21,13 +23,8 @@ class MemberResponse(MemberBase):
 class InventoryItemBase(BaseModel):
     title: str
     description: str
-    remaining_count: int
+    remaining_count: int = Field(ge=0, description="Available stock pool")
     expiration_date: datetime
-
-
-# 💡 ADDED: Your items.py router needs this blueprint to handle POST requests!
-class InventoryItemCreate(InventoryItemBase):
-    pass
 
 
 class InventoryItemResponse(InventoryItemBase):
@@ -47,7 +44,7 @@ class BookingResponse(BaseModel):
     member_id: int
     inventory_id: int
     created_at: datetime
-    status: str
+    status: BookingStatus
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -60,4 +57,4 @@ class CancelRequest(BaseModel):
 class CancelResponse(BaseModel):
     message: str
     booking_ref: str
-    status: str
+    status: BookingStatus

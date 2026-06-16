@@ -1,9 +1,18 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from enum import Enum
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
+
+
+class BookingStatus(str, Enum):
+    """Defines valid lifecycle states for a bento box transaction."""
+
+    CONFIRMED = "CONFIRMED"
+    CANCELLED = "CANCELLED"
 
 
 class Member(Base):
@@ -40,6 +49,8 @@ class Booking(Base):
         Integer, ForeignKey("inventory.id"), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.now, nullable=False
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
     )
-    status: Mapped[str] = mapped_column(String, default="confirmed", nullable=False)
+    status: Mapped[BookingStatus] = mapped_column(
+        SQLEnum(BookingStatus), default=BookingStatus.CONFIRMED, nullable=False
+    )

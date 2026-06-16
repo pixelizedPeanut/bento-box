@@ -13,7 +13,8 @@ router: APIRouter = APIRouter(prefix="/members", tags=["Members"])
 
 @router.get("/", response_model=list[MemberResponse])
 async def read_members(db: AsyncSession = Depends(get_db)) -> Sequence[Member]:
-    # Pulls all seeded member profiles directly from your SQLite database
+    """
+    Retrieves the global list of VIP member profiles for the concierge dashboard.
+    """
     result = await db.execute(select(Member))
-    members: Sequence[Member] = result.scalars().all()
-    return members
+    return result.scalars().all()

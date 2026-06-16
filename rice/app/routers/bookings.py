@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 
 from ..config import settings
 from ..database import get_db
-from ..models import Booking, InventoryItem, Member
+from ..models import Booking, BookingStatus, InventoryItem, Member
 from ..schemas import BookingRequest, BookingResponse, CancelRequest, CancelResponse
 
 router: APIRouter = APIRouter(tags=["Bookings"])
@@ -29,6 +29,12 @@ async def read_bookings(db: AsyncSession = Depends(get_db)) -> Sequence[Booking]
 async def book_item(
     payload: BookingRequest, db: AsyncSession = Depends(get_db)
 ) -> Booking:
+    """
+    Creates a new concierge booking for a member.
+
+    Validates member allocation limits, verifies lifestyle item availability,
+    and handles the atomic update of inventory and member counters.
+    """
     # 1. Verify Member Exists
     member_result = await db.execute(
         select(Member).where(Member.id == payload.member_id)
@@ -60,8 +66,8 @@ async def book_item(
 
     # 5. Execute: Update counters & generate unique reference string
     item.remaining_count -= 1
-    member.booking_count += 1  # 👈 Keep the member counter cache updated!
-    generated_ref: str = f"BBOX-{uuid.uuid4().hex[:8].upper()}"
+    member.booking_count += 1
+    generated_ref: str = f"CNCG-{uuid.uuid4().hex[:8].upper()}"
 
     # 6. Record the booking
     new_booking: Booking = Booking(
@@ -80,7 +86,13 @@ async def book_item(
 @router.post("/cancel", response_model=CancelResponse)
 async def cancel_booking(
     payload: CancelRequest, db: AsyncSession = Depends(get_db)
-) -> dict[str, str]:
+) -> CancelResponse:
+    """
+    Cancels an active booking via its unique reference.
+
+    Reverts the booking status to CANCELLED, restores the lifestyle item allocation,
+    and decrements the member's active booking counter cache in a single transaction.
+    """
     # 1. Locate the active booking
     booking_result = await db.execute(
         select(Booking).where(Booking.booking_ref == payload.booking_ref)
@@ -90,11 +102,11 @@ async def cancel_booking(
     if not booking:
         raise HTTPException(status_code=404, detail="Booking reference not found")
 
-    if booking.status == "CANCELLED":
+    if booking.status == BookingStatus.CANCELLED:
         raise HTTPException(status_code=400, detail="Booking is already cancelled")
 
     # 2. Update booking status
-    booking.status = "CANCELLED"
+    booking.status = BookingStatus.CANCELLED
 
     # 3. Restock the inventory item (swapped from stock)
     item_result = await db.execute(
@@ -104,10 +116,18 @@ async def cancel_booking(
     if item:
         item.remaining_count += 1
 
+    # 4. Decrease the member's counter cache
+    member_result = await db.execute(
+        select(Member).where(Member.id == booking.member_id)
+    )
+    member: Member | None = member_result.scalar_one_or_none()
+    if member:
+        member.booking_count -= 1
+
     await db.commit()
 
-    return {
-        "message": "Booking successfully cancelled",
-        "booking_ref": booking.booking_ref,
-        "status": booking.status,
-    }
+    return CancelResponse(
+        message="Booking successfully cancelled",
+        booking_ref=booking.booking_ref,
+        status=booking.status,
+    )

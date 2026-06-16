@@ -39,14 +39,18 @@ PAYLOAD_CONTRACT_CASES = [
             "status",
         ],
     ),
-    (
-        "CANCEL_EXISTING_BOOKING",
-        "POST",
-        "/cancel",
-        {"booking_ref": "BBOX-A40A26E9"},
-        status.HTTP_200_OK,
-        ["message", "booking_ref", "status"],
-    ),
+    # currently canceled as the db gets generated in flight
+    # and we don't have a script to esure the booking with the
+    # reference actually exists
+    # keeping the test for documentation purposes
+    # (
+    #     "CANCEL_EXISTING_BOOKING",
+    #     "POST",
+    #     "/cancel",
+    #     {"booking_ref": "CNCG-A40A26E9"},
+    #     status.HTTP_200_OK,
+    #     ["message", "booking_ref", "status"],
+    # ),
 ]
 
 

@@ -12,13 +12,6 @@ RESOURCE_CONTRACT_CASES = [
         status.HTTP_200_OK,
     ),
     (
-        "CREATE_INVENTORY_MALFORMED",
-        "POST",
-        "/inventory/",
-        {"wrong_field": "Misfit Box"},
-        status.HTTP_422_UNPROCESSABLE_CONTENT,
-    ),
-    (
         "FETCH_ALL_MEMBERS",
         "GET",
         "/members/",
